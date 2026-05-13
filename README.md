@@ -201,12 +201,6 @@ http://localhost:3000
 
 ---
 
-## 💼 Resume-Ready Project Description
-
-Designed and developed an end-to-end sales analytics platform using Python, SQL, Flask, and React to analyze retail performance across products, customers, and regions. Built an interactive dashboard with executive KPIs and visualizations that transformed raw transactional data into actionable business insights.
-
----
-
 ## 🚀 Future Enhancements
 
 * Predictive sales forecasting using scikit-learn
