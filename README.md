@@ -24,8 +24,6 @@ This dashboard provides executive-level insights using the well-known Superstore
 
 ## 🖼 Dashboard Preview
 
-> Add screenshots or a GIF here to showcase your dashboard.
-
 ![Dashboard Screenshot](images/dashboard-overview.png)
 
 ---
