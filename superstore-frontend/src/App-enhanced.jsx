@@ -1,4 +1,11 @@
+// Import React hooks: useState for managing component state, useEffect for side effects
 import { useState, useEffect } from "react"
+
+// Import Recharts visualization library — produces interactive, responsive charts
+// BarChart, LineChart = chart types
+// Bar, Line = data series components
+// XAxis, YAxis = axes
+// Tooltip = hover info, Legend = chart key, CartesianGrid = background grid
 import {
   BarChart, Bar,
   LineChart, Line,
@@ -9,8 +16,18 @@ import {
   Legend
 } from "recharts"
 
+// Base URL for the Flask backend API running on localhost:5000
+// React frontend runs on :5173, Flask runs on :5000 — they communicate via HTTP
 const API = "http://127.0.0.1:5000/api"
 
+/**
+ * KPI Card component — displays a single metric with optional trend indicator
+ * Props:
+ *   - label: metric name (e.g. "Total Revenue")
+ *   - value: formatted value (e.g. "$2.3M")
+ *   - delta: optional trend text (e.g. "↑ 12% YoY")
+ *   - deltaColor: green for good (#22A06B), red for bad
+ */
 const KPI = ({ label, value, delta, deltaColor }) => (
   <div style={{
     background: "white",
@@ -27,6 +44,10 @@ const KPI = ({ label, value, delta, deltaColor }) => (
   </div>
 )
 
+/**
+ * Insight component — displays a finding or recommendation
+ * Shows a key discovery from the data analysis (e.g. discount impact, seasonality)
+ */
 const Insight = ({ title, value, icon }) => (
   <div style={{
     background: "#f9f9f9",
@@ -40,30 +61,54 @@ const Insight = ({ title, value, icon }) => (
   </div>
 )
 
+/**
+ * Main App component — the entire dashboard
+ * 
+ * State variables:
+ *   - activeTab: which tab is shown ("overview", "insights", "query")
+ *   - selectedYear: filter data by year (2014-2017, or "all")
+ *   - kpis, regions, monthly, categories, etc: fetched data from Flask API
+ *   - sql, queryResult, queryError: for the SQL query explorer
+ *   - loading: shows spinner while API requests are in-flight
+ */
 export default function App() {
+  // State for UI/UX
   const [kpis, setKpis] = useState(null)
   const [regions, setRegions] = useState([])
   const [monthly, setMonthly] = useState([])
   const [categories, setCategories] = useState([])
   const [topProducts, setTopProducts] = useState([])
   const [discountAnalysis, setDiscountAnalysis] = useState([])
+  const [selectedYear, setSelectedYear] = useState("all")  // NEW: year filter
   const [sql, setSql] = useState("SELECT Category, COUNT(*) as Orders, ROUND(SUM(Sales), 0) as Revenue FROM orders GROUP BY Category")
   const [queryResult, setQueryResult] = useState([])
   const [queryError, setQueryError] = useState("")
   const [activeTab, setActiveTab] = useState("overview")
   const [loading, setLoading] = useState(true)
 
+  /**
+   * fmt() — number formatter utility
+   * Converts large numbers to readable K/M format
+   * Examples: 1000 → $1K, 1500000 → $1.5M
+   */
   const fmt = n =>
     n >= 1_000_000 ? `$${(n/1_000_000).toFixed(1)}M` : `$${(n/1000).toFixed(0)}K`
 
+  /**
+   * useEffect hook — runs once when component loads
+   * Fetches all data from the Flask backend via Promise.all()
+   * Promise.all() waits for all requests to complete before updating state
+   * 
+   * Dependency array [] means this runs only once on mount
+   */
   useEffect(() => {
     Promise.all([
-      fetch(`${API}/kpis`).then(r => r.json()),
-      fetch(`${API}/revenue-by-region`).then(r => r.json()),
-      fetch(`${API}/revenue-by-month`).then(r => r.json()),
-      fetch(`${API}/category-performance`).then(r => r.json()),
-      fetch(`${API}/top-products`).then(r => r.json()),
-      fetch(`${API}/discount-impact`).then(r => r.json())
+      fetch(`${API}/kpis?year=${selectedYear}`).then(r => r.json()),
+      fetch(`${API}/revenue-by-region?year=${selectedYear}`).then(r => r.json()),
+      fetch(`${API}/revenue-by-month?year=${selectedYear}`).then(r => r.json()),
+      fetch(`${API}/category-performance?year=${selectedYear}`).then(r => r.json()),
+      fetch(`${API}/top-products?year=${selectedYear}`).then(r => r.json()),
+      fetch(`${API}/discount-impact?year=${selectedYear}`).then(r => r.json())
     ]).then(([k, r, m, c, p, d]) => {
       setKpis(k[0])
       setRegions(r)
@@ -73,8 +118,13 @@ export default function App() {
       setDiscountAnalysis(d)
       setLoading(false)
     }).catch(err => console.error("API Error:", err))
-  }, [])
+  }, [selectedYear])  // Re-run when year changes
 
+  /**
+   * runQuery() — executes custom SQL from the textarea in the Query tab
+   * Sends the SQL to Flask's /api/query endpoint
+   * Flask validates it starts with SELECT, then returns results or error
+   */
   async function runQuery() {
     setQueryError("")
     const res = await fetch(`${API}/query`, {
@@ -100,10 +150,38 @@ export default function App() {
   return (
     <div style={{ fontFamily: "-apple-system, BlinkMacSystemFont, sans-serif", background: "#fafafa", minHeight: "100vh" }}>
       
-      {/* Header */}
-      <div style={{ background: "white", borderBottom: "1px solid #eee", padding: "24px 30px" }}>
-        <h1 style={{ margin: 0, fontSize: 28, fontWeight: 600 }}>Superstore Analytics</h1>
-        <p style={{ margin: "4px 0 0", color: "#888", fontSize: 14 }}>Data-driven insights & SQL explorer</p>
+      {/* Header with year filter dropdown */}
+      <div style={{ background: "white", borderBottom: "1px solid #eee", padding: "24px 30px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+        <div>
+          <h1 style={{ margin: 0, fontSize: 28, fontWeight: 600 }}>Superstore Analytics</h1>
+          <p style={{ margin: "4px 0 0", color: "#888", fontSize: 14 }}>Data-driven insights & SQL explorer</p>
+        </div>
+        
+        {/* Year filter dropdown — allows drilling down by year or viewing all years */}
+        <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+          <label style={{ fontSize: 13, color: "#666", fontWeight: 500 }}>Filter by year:</label>
+          <select
+            value={selectedYear}
+            onChange={(e) => {
+              setSelectedYear(e.target.value)
+              setLoading(true)  // Show loading spinner while fetching new data
+            }}
+            style={{
+              padding: "8px 12px",
+              border: "1px solid #ddd",
+              borderRadius: 6,
+              fontSize: 13,
+              cursor: "pointer",
+              background: "white"
+            }}
+          >
+            <option value="all">All years (2014-2017)</option>
+            <option value="2014">2014</option>
+            <option value="2015">2015</option>
+            <option value="2016">2016</option>
+            <option value="2017">2017</option>
+          </select>
+        </div>
       </div>
 
       {/* Tabs */}
