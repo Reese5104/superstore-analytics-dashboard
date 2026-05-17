@@ -60,6 +60,7 @@ This dashboard provides executive-level insights using the well-known Superstore
 * React
 * Recharts
 * Tailwind CSS
+* Node
 
 ### Development Tools
 
@@ -95,16 +96,16 @@ CSV Data → Python ETL → SQLite Database → Flask API → React Dashboard �
 ```text
 superstore-analytics-dashboard/
 │
-├── backend/
-│   ├── app.py
-│   ├── analysis.py
-│   ├── database.py
-│   └── superstore.db
+├── api/
+│   └── app.py
 │
-├── frontend/
+├── superstore-frontend/
 │   ├── src/
+│   ├── App-enhanced.jsx
 │   └── package.json
 │
+├── analysis.py
+├── superstore.db
 ├── requirements.txt
 └── README.md
 ```
@@ -149,16 +150,15 @@ pip install -r requirements.txt
 ### 4. Start the Backend
 
 ```bash
-cd backend
+cd api
 python app.py
 ```
 
 ### 5. Start the Frontend
 
 ```bash
-cd frontend
-npm install
-npm start
+cd supertore-frontend/src
+npm run dev
 ```
 
 ### 6. Open the Application
