@@ -26,7 +26,7 @@ This dashboard provides executive-level insights using the well-known Superstore
 
 ![Dashboard Screenshot](images/Page-1.png)
 ![Dashboard Screenshot](images/Page-2.png)
-![Dashboard Screenshot](images/Page3.png)
+![Dashboard Screenshot](images/Page-3.png)
 
 
 ---
