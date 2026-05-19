@@ -169,7 +169,7 @@ npm run dev
 Navigate to:
 
 ```text
-http://localhost:3000
+http://localhost:XXXX
 ```
 
 ---
